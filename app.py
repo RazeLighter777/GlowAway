@@ -1,6 +1,6 @@
 from flask import Flask
 
-from db import createUser, init_db, close_db
+from db import *
 from glowrouter import *
 from glowclient import *
 from glowcontroller import *
@@ -45,8 +45,8 @@ if configuration["MODULES"]["CONTROLLER"] == "yes":
 print("GOOD")
 with app.app_context():
     init_db()
+    print("role :" + str(getUserRole("52151382-aad8-4870-8198-0e3a2b8376f2", getUsersInRoom("52151382-aad8-4870-8198-0e3a2b8376f2")[0])))
 
-    print(createUser("justin", "AAAABBBBCCCC"))
 @app.teardown_appcontext
 def close_connection(exception):
     close_db()

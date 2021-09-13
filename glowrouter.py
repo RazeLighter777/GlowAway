@@ -1,10 +1,10 @@
+import os
 from configparser import ConfigParser
 import subprocess
 from datetime import time
 from hashlib import sha256
 
 import select
-from Crypto.Hash import SHA256
 from ecdsa import ecdsa
 from flask import Blueprint, request
 from jsonschema import validate
@@ -119,4 +119,7 @@ HiddenServicePort 80 {host}:{port}
     f = open(".torrc", "w")
     f.write(torrc)
     f.close()
-    cm = subprocess.Popen(["torbin/Tor/tor.exe", "-f", ".torrc"],stdout=subprocess.DEVNULL)
+    if os.name != "nt":
+        cm = subprocess.Popen(["tor", "-f", ".torrc"],stdout=subprocess.DEVNULL)
+    else:
+        cm = subprocess.Popen(["torbin/Tor/tor.exe", "-f", ".torrc"],stdout=subprocess.DEVNULL)
