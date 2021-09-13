@@ -51,7 +51,10 @@ def register():
         },
         "required": ["alias", "pubkey", "signature"]
     }
-    validate(request.json, schema=schema)
+    try:
+        validate(request.json, schema=schema)
+    except:
+        return {"error" : "missing fields"}
     if not validateAlias(request.json['alias']):
         return {"error": "bad alias"}
     key = 0

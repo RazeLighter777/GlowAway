@@ -1,7 +1,8 @@
-
 from PySide2.QtCore import *
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
+
+from guifunctions import UserCreationWindow
 
 
 class MainGui(object):
@@ -17,6 +18,9 @@ class MainGui(object):
         self.actionAbout_GlowAway.setObjectName(u"actionAbout_GlowAway")
         self.actionUser_Settings = QAction(dd)
         self.actionUser_Settings.setObjectName(u"actionUser_Settings")
+        self.actionCreate_User = QAction(dd)
+        self.actionUser_Settings.setObjectName(u"actionCreate_Uesr")
+
         self.actionAdd_Room = QAction(dd)
         self.actionAdd_Room.setObjectName(u"actionAdd_Room")
         self.actionAdd_router_2 = QAction(dd)
@@ -81,6 +85,7 @@ class MainGui(object):
         self.menubar.addAction(self.menuConnect.menuAction())
         self.menubar.addAction(self.menuAbout.menuAction())
         self.menuConnect.addAction(self.actionUser_Settings)
+        self.menuConnect.addAction(self.actionCreate_User)
         self.menuConnect.addAction(self.actionAdd_Room)
         self.menuAbout.addSeparator()
         self.menuAbout.addAction(self.actionHelp)
@@ -92,6 +97,7 @@ class MainGui(object):
         self.retranslateUi(dd)
 
         QMetaObject.connectSlotsByName(dd)
+
     # setupUi
 
     def retranslateUi(self, dd):
@@ -100,13 +106,15 @@ class MainGui(object):
         self.actionHelp.setText(QCoreApplication.translate("dd", u"Help", None))
         self.actionAbout_GlowAway.setText(QCoreApplication.translate("dd", u"About GlowAway", None))
         self.actionUser_Settings.setText(QCoreApplication.translate("dd", u"User Settings", None))
+        self.actionCreate_User.setText(QCoreApplication.translate("dd", u"Create User", None))
         self.actionAdd_Room.setText(QCoreApplication.translate("dd", u"Network Settings", None))
         self.actionAdd_router_2.setText(QCoreApplication.translate("dd", u"Add router", None))
         self.actionAdd_room.setText(QCoreApplication.translate("dd", u"Add room", None))
         self.actionPrivate_message.setText(QCoreApplication.translate("dd", u"Private message", None))
-#if QT_CONFIG(tooltip)
-        self.listView.setToolTip(QCoreApplication.translate("dd", u"<html><head/><body><p>List of Rooms</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
+        # if QT_CONFIG(tooltip)
+        self.listView.setToolTip(
+            QCoreApplication.translate("dd", u"<html><head/><body><p>List of Rooms</p></body></html>", None))
+        # endif // QT_CONFIG(tooltip)
         self.textBrowser.setDocumentTitle(QCoreApplication.translate("dd", u"Chat", None))
         self.pushButton.setText(QCoreApplication.translate("dd", u"PushButton", None))
         self.menuConnect.setTitle(QCoreApplication.translate("dd", u"Settings", None))
@@ -129,16 +137,23 @@ class MainWindow(QMainWindow, MainGui):
         self.setupUi(self)
 
         self.connectMe()
-
+        self.dialogs = []
         #
 
         self.setWindowTitle("GlowAway")
 
-
     #
 
     def connectMe(self):
-        self.pushButton.clicked.connect(lambda : self.textBrowser.insertPlainText(self.lineEdit.text() + "\n"))
+        self.pushButton.clicked.connect(lambda: self.textBrowser.insertPlainText(self.lineEdit.text() + "\n"))
+        self.actionCreate_User.triggered.connect(lambda: self.showUserCreation())
+
+    def showUserCreation(self):
+        print("Showing")
+        w = UserCreationWindow()
+        self.dialogs.append(w)
+        print(self.dialogs)
+        w.show()
 
     #
 
