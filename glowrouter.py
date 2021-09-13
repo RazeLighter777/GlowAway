@@ -29,6 +29,7 @@ def users():
         """
     return "OK"
 
+
 @glowrouter_api.route('/register')
 def register():
     """Registers on the server. Should be password protected.
@@ -41,23 +42,26 @@ def register():
         Response : "OK"/"BAD"
         """
     schema = {
-        "alias" : "string",
-        "pubkey" : "string",
-        "signature" : "string",
-        "password" : "string",
+        "type": "object",
+        "properties : ": {
+            "alias": "string",
+            "pubkey": "string",
+            "signature": "string",
+            "password": "string",
+        },
         "required": ["alias", "pubkey", "signature"]
     }
     validate(request.json, schema=schema)
     if not validateAlias(request.json['alias']):
-        return {"error" : "bad alias"}
+        return {"error": "bad alias"}
     key = 0
     try:
         vk = ecdsa.VerifyingKey.from_string(bytes.fromhex(request.json['pubkey']), curve=ecdsa.SECP256k1,
                                             hashfunc=sha256)  # the default is sha1
         vk.verify(bytes.fromhex(request.json['signature']), request.json['alias'])
     except:
-        return {"error" : "bad key/signature"}
-    return createUser(request.json['alias'],request.json['pubkey'])
+        return {"error": "bad key/signature"}
+    return createUser(request.json['alias'], request.json['pubkey'])
 
 
 @glowrouter_api.route('/join')
@@ -115,11 +119,11 @@ DataDirectory ./tor
 ## Hidden service configuration
 HiddenServiceDir ./tor/hiddenService
 HiddenServicePort 80 {host}:{port}
-    """.format(host = config["ROUTER"]["HOST"], port = config["ROUTER"]["PORT"])
+    """.format(host=config["ROUTER"]["HOST"], port=config["ROUTER"]["PORT"])
     f = open(".torrc", "w")
     f.write(torrc)
     f.close()
     if os.name != "nt":
-        cm = subprocess.Popen(["tor", "-f", ".torrc"],stdout=subprocess.DEVNULL)
+        cm = subprocess.Popen(["tor", "-f", ".torrc"], stdout=subprocess.DEVNULL)
     else:
-        cm = subprocess.Popen(["torbin/Tor/tor.exe", "-f", ".torrc"],stdout=subprocess.DEVNULL)
+        cm = subprocess.Popen(["torbin/Tor/tor.exe", "-f", ".torrc"], stdout=subprocess.DEVNULL)

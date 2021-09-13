@@ -1,3 +1,8 @@
+import sys
+import threading
+
+from PySide2 import QtGui
+from PySide2.QtWidgets import QApplication
 from flask import Flask
 
 from db import *
@@ -6,6 +11,8 @@ from glowclient import *
 from glowcontroller import *
 
 import configparser
+
+from gui import MainGui, MainWindow
 
 app = Flask(__name__)
 # Build Database
@@ -43,13 +50,26 @@ if configuration["MODULES"]["ROUTER"] == "yes":
 if configuration["MODULES"]["CONTROLLER"] == "yes":
     app.register_blueprint(glowcontrol_api)
 print("GOOD")
+
+
+def startGui():
+    guiapp = QApplication(sys.argv)
+    mainWindow = MainWindow()
+    mainWindow.show()
+    sys.exit(guiapp.exec_())
+
+
 with app.app_context():
+    th = threading.Thread(target=startGui)
+    th.start()
     init_db()
-    print("role :" + str(getUserRole("52151382-aad8-4870-8198-0e3a2b8376f2", getUsersInRoom("52151382-aad8-4870-8198-0e3a2b8376f2")[0])))
+
 
 @app.teardown_appcontext
 def close_connection(exception):
     close_db()
 
+
 if __name__ == "__main__":
-    app.run(debug=True)
+
+    app.run(debug=False, use_reloader=False)
