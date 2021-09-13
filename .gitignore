@@ -1,0 +1,7 @@
+__pycache__/
+glow.db
+tor/
+torbin/
+.idea
+venv/
+.torrc
