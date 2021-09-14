@@ -1,7 +1,6 @@
 import sys
 import threading
 
-from PySide2 import QtGui
 from PySide2.QtWidgets import QApplication
 from flask import Flask
 
@@ -12,7 +11,7 @@ from glowcontroller import *
 
 import configparser
 
-from gui import MainGui, MainWindow
+from gui import MainWindow
 
 app = Flask(__name__)
 # Build Database
@@ -52,18 +51,17 @@ if configuration["MODULES"]["CONTROLLER"] == "yes":
 print("GOOD")
 
 
-def startGui():
+def startGui(app):
     guiapp = QApplication(sys.argv)
-    mainWindow = MainWindow()
+    mainWindow = MainWindow(app)
     mainWindow.show()
     sys.exit(guiapp.exec_())
 
 
 with app.app_context():
-    th = threading.Thread(target=startGui)
-    th.start()
     init_db()
-
+    th = threading.Thread(target=startGui, args=[app])
+    th.start()
 
 @app.teardown_appcontext
 def close_connection(exception):
@@ -73,3 +71,5 @@ def close_connection(exception):
 if __name__ == "__main__":
 
     app.run(debug=False, use_reloader=False)
+
+

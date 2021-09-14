@@ -9,7 +9,7 @@ from ecdsa import ecdsa
 from flask import Blueprint, request
 from jsonschema import validate
 
-from db import get_db, createUser
+from db import createUser, get_db
 from validation import validateAlias
 
 glowrouter_api = Blueprint('glowrouter_api', __name__)

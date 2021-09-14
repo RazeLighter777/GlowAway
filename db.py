@@ -1,19 +1,17 @@
 import hashlib
 import secrets
 import sqlite3
+from base64 import b64encode, b64decode
 from datetime import datetime
-from uuid import UUID, uuid4
+from uuid import uuid4
 
-from flask import g
+import flask
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
+from ecdsa import SigningKey
+from flask import g, current_app
 
 DATABASE = "glow.db"
-
-
-def get_db():
-    db = getattr(g, '_database', None)
-    if db is None:
-        db = g._database = sqlite3.connect(DATABASE)
-    return db
 
 
 def createSession(uuid: str, onion: str) -> dict:
@@ -21,7 +19,21 @@ def createSession(uuid: str, onion: str) -> dict:
     get_db().execute("INSERT INTO SESSIONS values (?,?,?)", (uuid, onion, str(time)))
     return {"user": uuid, "time": time}
 
+def addKey(useruuid : str, privkey , password : str) -> bool:
+    if not userExists(useruuid):
+        return False
+    key = pad(password.encode(),16)
+    cipher = AES.new(key, AES.MODE_ECB)
+    get_db().execute("INSERT INTO privateKeys VALUES (?,?)", (useruuid, cipher.encrypt(pad(privkey,32))))
+    get_db().commit()
 
+def getUserKeyPair(useruuid : str, password) -> dict:
+    if not userExists(useruuid):
+        return False
+    res = get_db().execute("SELECT encryptedprivkey FROM privateKeys WHERE userId = ?", (useruuid,)).fetchone()[0]
+    key = pad(password.encode(), 16)
+    cipher = AES.new(key,AES.MODE_ECB)
+    return {"privateKey" : SigningKey.from_string(unpad(cipher.decrypt(res),32))}
 def createUser(alias: str, pubkey: str) -> dict:
     uuid = createFingerprint(pubkey)
     if userExists(uuid):
@@ -91,5 +103,13 @@ def init_db():
     db.commit()
 
 
+
 def close_db():
     get_db().close()
+
+
+def get_db():
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE)
+    return db

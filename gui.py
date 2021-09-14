@@ -127,13 +127,13 @@ class MainWindow(QMainWindow, MainGui):
 
     #
 
-    def __init__(self):
+    def __init__(self, app):
         #
 
         QMainWindow.__init__(self)
 
         #
-
+        self.app = app
         self.setupUi(self)
 
         self.connectMe()
@@ -150,7 +150,7 @@ class MainWindow(QMainWindow, MainGui):
 
     def showUserCreation(self):
         print("Showing")
-        w = UserCreationWindow()
+        w = UserCreationWindow(self.app)
         self.dialogs.append(w)
         print(self.dialogs)
         w.show()
