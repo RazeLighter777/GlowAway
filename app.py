@@ -1,5 +1,6 @@
 import sys
 import threading
+from multiprocessing.context import Process
 
 from PySide2.QtWidgets import QApplication
 from flask import Flask
@@ -68,8 +69,11 @@ def close_connection(exception):
     close_db()
 
 
+
+
 if __name__ == "__main__":
-
-    app.run(debug=False, use_reloader=False)
-
+    server = Process(target=app.run)
+    server.start()
+    print("yes")
+    setServer(server)
 

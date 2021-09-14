@@ -1,8 +1,12 @@
+from PySide2 import QtCore
 from PySide2.QtCore import *
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
+from flask import request
 
-from guifunctions import UserCreationWindow
+import db
+from db import getUserAlias, getUsersWithKeys
+from guifunctions import UserCreationWindow, UserSelectionWindow
 
 
 class MainGui(object):
@@ -10,6 +14,12 @@ class MainGui(object):
         if not dd.objectName():
             dd.setObjectName(u"dd")
         dd.resize(967, 527)
+        #create app variables
+        self.userinfo = QLabel()
+        self.userinfo.setText("Not logged in.")
+        custom_font = QFont()
+        custom_font.setWeight(18);
+        self.userinfo.setFont(custom_font)
         self.actionAdd_router = QAction(dd)
         self.actionAdd_router.setObjectName(u"actionAdd_router")
         self.actionHelp = QAction(dd)
@@ -32,6 +42,7 @@ class MainGui(object):
         self.centralwidget = QWidget(dd)
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayout_2 = QVBoxLayout(self.centralwidget)
+        self.verticalLayout_2.addWidget(self.userinfo)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName(u"horizontalLayout")
@@ -101,11 +112,12 @@ class MainGui(object):
     # setupUi
 
     def retranslateUi(self, dd):
+        print("retrannied")
         dd.setWindowTitle(QCoreApplication.translate("dd", u"MainWindow", None))
         self.actionAdd_router.setText(QCoreApplication.translate("dd", u"Add router", None))
         self.actionHelp.setText(QCoreApplication.translate("dd", u"Help", None))
         self.actionAbout_GlowAway.setText(QCoreApplication.translate("dd", u"About GlowAway", None))
-        self.actionUser_Settings.setText(QCoreApplication.translate("dd", u"User Settings", None))
+        self.actionUser_Settings.setText(QCoreApplication.translate("dd", u"Switch User", None))
         self.actionCreate_User.setText(QCoreApplication.translate("dd", u"Create User", None))
         self.actionAdd_Room.setText(QCoreApplication.translate("dd", u"Network Settings", None))
         self.actionAdd_router_2.setText(QCoreApplication.translate("dd", u"Add router", None))
@@ -116,7 +128,7 @@ class MainGui(object):
             QCoreApplication.translate("dd", u"<html><head/><body><p>List of Rooms</p></body></html>", None))
         # endif // QT_CONFIG(tooltip)
         self.textBrowser.setDocumentTitle(QCoreApplication.translate("dd", u"Chat", None))
-        self.pushButton.setText(QCoreApplication.translate("dd", u"PushButton", None))
+        self.pushButton.setText(QCoreApplication.translate("dd", u"Submit Chat", None))
         self.menuConnect.setTitle(QCoreApplication.translate("dd", u"Settings", None))
         self.menuAbout.setTitle(QCoreApplication.translate("dd", u"About", None))
         self.menuNetwork.setTitle(QCoreApplication.translate("dd", u"Chat", None))
@@ -134,28 +146,53 @@ class MainWindow(QMainWindow, MainGui):
 
         #
         self.app = app
+        #Create app data
+        app.users = []
+        app.currentUser = None
+
         self.setupUi(self)
+
+
 
         self.connectMe()
         self.dialogs = []
         #
 
         self.setWindowTitle("GlowAway")
-
+        with app.app_context():
+            if len(getUsersWithKeys()) == 0:
+                self.showUserCreation()
+            else:
+                self.showUserSelection()
     #
 
     def connectMe(self):
         self.pushButton.clicked.connect(lambda: self.textBrowser.insertPlainText(self.lineEdit.text() + "\n"))
         self.actionCreate_User.triggered.connect(lambda: self.showUserCreation())
-
+        self.actionUser_Settings.triggered.connect(lambda: self.showUserSelection())
     def showUserCreation(self):
         print("Showing")
         w = UserCreationWindow(self.app)
         self.dialogs.append(w)
         print(self.dialogs)
         w.show()
-
-    #
-
+        w.setWindowModality(QtCore.Qt.WindowModality.ApplicationModal)
+        self.killInvisibleWindows()
+    def showUserSelection(self):
+        print("Showing")
+        w = UserSelectionWindow(self.app, self.userinfo)
+        w.activateWindow()
+        w.setWindowModality(QtCore.Qt.WindowModality.ApplicationModal)
+        self.dialogs.append(w)
+        w.show()
+        self.killInvisibleWindows()
+    def killInvisibleWindows(self):
+        nw = []
+        for w in self.dialogs:
+            if w.isVisible():
+              nw.append(w)
+        w = nw
     def slotButton(self):
         self.label.setText("GlowAway")
+    def closeEvent(self, event):
+        db.shutdownServer()

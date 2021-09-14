@@ -1,7 +1,6 @@
 import hashlib
 import secrets
 import sqlite3
-from base64 import b64encode, b64decode
 from datetime import datetime
 from uuid import uuid4
 
@@ -13,6 +12,9 @@ from flask import g, current_app
 
 DATABASE = "glow.db"
 
+def setServer(server):
+    global SERVER
+    SERVER = server
 
 def createSession(uuid: str, onion: str) -> dict:
     time = datetime.time()
@@ -29,11 +31,16 @@ def addKey(useruuid : str, privkey , password : str) -> bool:
 
 def getUserKeyPair(useruuid : str, password) -> dict:
     if not userExists(useruuid):
-        return False
+        return {"error" : "Password Incorrent"}
     res = get_db().execute("SELECT encryptedprivkey FROM privateKeys WHERE userId = ?", (useruuid,)).fetchone()[0]
     key = pad(password.encode(), 16)
     cipher = AES.new(key,AES.MODE_ECB)
-    return {"privateKey" : SigningKey.from_string(unpad(cipher.decrypt(res),32))}
+    try:
+        sk = SigningKey.from_string(unpad(cipher.decrypt(res),32))
+    except:
+        return {"error" : "Password Incorrect"}
+    return {"privateKey" : sk, "publicKey" : sk.verifying_key}
+
 def createUser(alias: str, pubkey: str) -> dict:
     uuid = createFingerprint(pubkey)
     if userExists(uuid):
@@ -74,6 +81,22 @@ def getUsersInRoom(roomuuid : str) -> list:
     for e in get_db().execute("SELECT userId FROM roomMemberships WHERE roomId = ?", (roomuuid,)).fetchall():
         result.append(e[0])
     return result
+def getUsersWithKeys() -> list:
+    result = []
+    for e in get_db().execute("SELECT userId FROM privateKeys").fetchall():
+        result.append(e[0])
+    return result
+
+def getAliasesWithUUIDs(useruuids : list) -> list:
+    res = []
+    for uuid in useruuids:
+        res.append(get_db().execute("SELECT alias FROM users WHERE userId = ?", (uuid,)).fetchone()[0])
+    return res
+
+def getUserAlias(useruuid: str):
+    if not userExists(useruuid):
+        return None
+    return get_db().execute("SELECT alias FROM users WHERE userId = ?", (useruuid,)).fetchone()[0]
 
 def getUserRole(roomuuid : str, useruuid : str) -> int:
     if not isUserInRoom(useruuid, roomuuid):
@@ -113,3 +136,6 @@ def get_db():
     if db is None:
         db = g._database = sqlite3.connect(DATABASE)
     return db
+
+def shutdownServer():
+    SERVER.terminate()
